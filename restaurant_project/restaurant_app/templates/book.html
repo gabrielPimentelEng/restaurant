@@ -1,0 +1,14 @@
+{%extends 'base.html'%}
+
+{%block content%}
+<h1>Make a reservation</h1>
+
+<form action="/book/" method="post">
+    {%csrf_token%}
+    <p>First Name: <input type="text" name="first_name" required></p>
+    <p>Last Name: <input type="text" name="last_name" required></p>
+    <p>Guest Number: <input type="number" name="guest_number" required></p>
+    <p>Comment: <input type="comment" name="comment" ></textarea></p>
+    <p><input type="submit" value="Submit"></p>
+</form>
+{%endblock%}
