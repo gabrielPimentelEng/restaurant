@@ -19,8 +19,6 @@ def menu_view(request):
 
 def book_view(request):
 
-
-
     if request.method == 'POST':
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
@@ -37,8 +35,7 @@ def book_view(request):
         booking.save()
 
         return redirect('book_submit')
-        
-    
+           
     return render(request,'book.html')
 
 def booking_confirmation(request):
@@ -47,11 +44,9 @@ def booking_confirmation(request):
 
 
 def item_detail(request,pk):
-
     if pk:
             
-        item = Menu.objects.get(pk=pk)
-        
+        item = Menu.objects.get(pk=pk)    
     else:
         item = ""
     item_dict = {"item":item}
