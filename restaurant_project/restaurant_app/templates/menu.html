@@ -10,7 +10,7 @@
 
         <a href="{% url 'menu_item' pk=item.pk %}">{{item.name}}</a>
         <span class="menu-price">
-            <strong>${{item.price}}.00</strong>
+            <strong>${{item.price}}</strong>
         </span>
     </p>
     {%endfor%}
