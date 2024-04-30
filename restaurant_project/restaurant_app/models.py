@@ -29,8 +29,13 @@ class Booking(models.Model):
     def __str__(self):
         return self.first_name
     
-# class Rating(models.Model):
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#     menuitem_id = models.SmallIntegerField()
-#     rating = models.SmallIntegerField()
+class Rating(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    menuitem_id = models.SmallIntegerField()
+    rating = models.SmallIntegerField()
+    
+    class Meta:
+        unique_together = ('user','menuitem_id')
 
+    def __str__(self):
+        return self.user
