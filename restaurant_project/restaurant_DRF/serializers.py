@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from restaurant_app.models import Menu, Booking,Category
+from restaurant_app.models import Menu, Booking,Category,Rating
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -23,6 +23,12 @@ class MenuSerializer(serializers.ModelSerializer):
         'inventory':{'min_value':0}
     }
 
+class RatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rating
+        fields = ['id','user','menuitem_id','rating']
+
+    
 
 
 

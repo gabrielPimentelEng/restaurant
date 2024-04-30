@@ -1,9 +1,11 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view,renderer_classes
-from .serializers import MenuSerializer,CategorySerializer,BookingSerializer
-from restaurant_app.models import Menu,Category,Booking
+from .serializers import MenuSerializer,CategorySerializer,BookingSerializer,RatingSerializer
+from restaurant_app.models import Menu,Category,Booking,Rating
 from rest_framework import status,generics
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 # Create your views here.
 # from rest_framework import generics,viewsets
 # from .models import MenuItem, Category
@@ -44,3 +46,36 @@ class BookingDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
 
+# @api_view(['POST','DELETE'])
+# @permission_classes([IsAdminUser])
+# def managers(request):
+#     user = request.data['user']
+#     if user:
+#         user = get_object_or_404(User, user=user)
+#         managers = Group.objects.get(name="Manager")
+#         if request.method == 'POST':
+            
+#             managers.user_set.add(user)
+#         if request.method == 'DELETE':
+#             managers.user_set.remove(user)
+#         return Response({"message":"ok"})
+    
+#     return Response({"message":"error"}, status.HTTP_400_BAD_REQUEST)
+
+class RatingView(APIView):
+    
+    permission_classes = [IsAuthenticated]
+    queryset = Rating.objects.all()
+    serializer_class = RatingSerializer
+    def post(self, request):
+        data = {"message":"POST request processed"}
+        return Response(data,status=status.HTTP_200_OK)
+    def get(self, request):
+        queryset = Rating.objects.all()
+        serializer_class = RatingSerializer
+        data = {"message":"GET request processed"}
+        return Response(data,status=status.HTTP_200_OK)
+class RatingViewList(generics.ListCreateAPIView):
+    
+    queryset = Rating.objects.all()
+    serializer_class = RatingSerializer
