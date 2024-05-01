@@ -31,7 +31,7 @@ class Booking(models.Model):
     
 class Rating(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    menuitem_id = models.SmallIntegerField()
+    menuitem_id = models.ForeignKey(Menu, on_delete=models.CASCADE)
     rating = models.SmallIntegerField()
     
     class Meta:
