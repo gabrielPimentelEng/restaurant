@@ -24,10 +24,22 @@ class MenuSerializer(serializers.ModelSerializer):
     }
 
 class RatingSerializer(serializers.ModelSerializer):
+    user_username = serializers.SerializerMethodField()
+    user_id = serializers.IntegerField(source='user.id',read_only=True)
     class Meta:
         model = Rating
-        fields = ['id','user','menuitem_id','rating']
-
+        fields = ['id','user_username','user_id','menuitem_id','rating']
+        read_only_fields = ['user']
+        extra_kwargs = {
+            'rating': {'min_value': 0, 'max_value':5}
+        }
+        
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+    
+    def get_user_username(self, obj):
+        return obj.user.username if obj.user else None
     
 
 

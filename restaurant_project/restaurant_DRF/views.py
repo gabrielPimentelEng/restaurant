@@ -6,6 +6,9 @@ from rest_framework import status,generics
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
+from rest_framework.exceptions import PermissionDenied
+from .throttle import CustomRateThrottle
 # Create your views here.
 # from rest_framework import generics,viewsets
 # from .models import MenuItem, Category
@@ -64,17 +67,34 @@ class BookingDeleteView(generics.RetrieveUpdateDestroyAPIView):
 
 class RatingView(APIView):
     
-    permission_classes = [IsAuthenticated]
-    queryset = Rating.objects.all()
-    serializer_class = RatingSerializer
+    permission_classes = [IsAuthenticated] # blocks post and get for non authorized users
+    throttle_classes = [CustomRateThrottle]
     def post(self, request):
-        data = {"message":"POST request processed"}
-        return Response(data,status=status.HTTP_200_OK)
+        
+        # if not request.user.is_authenticated:
+        #     raise PermissionDenied("You must be logged in to post ratings.")
+        
+        
+        existing_rating  = Rating.objects.filter(user=request.user, menuitem_id=request.data.get('menuitem_id')).first()
+        if not existing_rating:
+            serializer_class = RatingSerializer(data=request.data, context={'request':request})
+        else:
+            serializer_class = RatingSerializer(existing_rating)
+            
+            return Response({
+                'message':f"User {request.user.username} already reviewd this item",
+                'data': serializer_class.data}, status=status.HTTP_200_OK)
+        if serializer_class.is_valid():
+            serializer_class.save()
+            return Response(serializer_class.data,status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer_class.errors,status=status.HTTP_400_BAD_REQUEST)
+        
     def get(self, request):
         queryset = Rating.objects.all()
-        serializer_class = RatingSerializer
-        data = {"message":"GET request processed"}
-        return Response(data,status=status.HTTP_200_OK)
+        serializer_class = RatingSerializer(queryset, many=True)
+        return Response(serializer_class.data,status=status.HTTP_200_OK)
+    
 class RatingViewList(generics.ListCreateAPIView):
     
     queryset = Rating.objects.all()
