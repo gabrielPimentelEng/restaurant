@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'restaurant_app',
     'restaurant_DRF',
     'django_filters',
-    'rest_framework.authtoken'
+    'rest_framework.authtoken',
+    'djoser',
     
 ]
 
@@ -163,9 +164,15 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'custom': '10/min',
     },
+    
         
 
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 3
+}
+DJOSER = {
+    # 'TOKEN_MODEL': None,  # This is important when using JWT
+    'USER_ID_FIELD':'username',
+    # "LOGIN_FIELD":"email"
 }
 
