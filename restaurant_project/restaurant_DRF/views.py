@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view,renderer_classes
 from .serializers import MenuSerializer,CategorySerializer,BookingSerializer,RatingSerializer
-from restaurant_app.models import Menu,Category,Booking,Rating
+from restaurant_app.models import MenuItem,Category,Booking,Rating
 from rest_framework import status,generics
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
 from rest_framework.exceptions import PermissionDenied
 from .throttle import CustomRateThrottle
+from .permissions import MenuItemPermittions,SpecificMenuItemPermittions
 # Create your views here.
 # from rest_framework import generics,viewsets
 # from .models import MenuItem, Category
@@ -17,22 +18,26 @@ from .throttle import CustomRateThrottle
 
 @api_view()
 def menu_item(request):
-    items = Menu.objects.all()
+    items = MenuItem.objects.all()
     serialized_item = MenuSerializer(items,many=True)
     return Response(serialized_item.data)
 
 
 
 class MenuView(generics.ListCreateAPIView):
-    queryset = Menu.objects.all()
+    queryset = MenuItem.objects.all()
     serializer_class = MenuSerializer
+    permission_classes = [MenuItemPermittions]
+    
     
 # class MenuItemView(generics.ListCreateAPIView):
-class MenuItemView(generics.RetrieveUpdateDestroyAPIView ):
-    queryset = Menu.objects.all()
+class MenuItemView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = MenuItem.objects.all()
     serializer_class = MenuSerializer
+    permission_classes = [SpecificMenuItemPermittions]
+    # lookup_field = 'name' # Using name instead of pk as expected parameter in url
+    
     ordering_fields = ['price', 'inventory']
-    # filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['price','inventory']
     search_fields = ['title']
     
@@ -95,7 +100,7 @@ class RatingView(APIView):
         serializer_class = RatingSerializer(queryset, many=True)
         return Response(serializer_class.data,status=status.HTTP_200_OK)
     
-class RatingViewList(generics.ListCreateAPIView):
+class RatingViewList(generics.RetrieveUpdateDestroyAPIView):
     
     queryset = Rating.objects.all()
     serializer_class = RatingSerializer

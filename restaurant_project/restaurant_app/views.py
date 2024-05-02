@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect
-from .models import Menu,Booking
+from .models import MenuItem,Booking
 # Create your views here.
 
 
@@ -10,7 +10,7 @@ def about_view(request):
     return render(request,'about.html')
 
 def menu_view(request):
-    menu_data = Menu.objects.all().order_by('name')
+    menu_data = MenuItem.objects.all().order_by('name')
     main_data = {"menu": menu_data}
     return render(request,'menu.html',main_data)
 
@@ -38,7 +38,7 @@ def booking_confirmation(request):
 
 def item_detail(request,pk):
     if pk:   
-        item = Menu.objects.get(pk=pk)    
+        item = MenuItem.objects.get(pk=pk)    
     else:
         item = ""
     item_dict = {"item":item}

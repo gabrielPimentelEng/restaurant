@@ -10,5 +10,6 @@ urlpatterns = [
     path('booking_confirmation/',views.booking_confirmation, name ='book_submit'),
     path('menu/<int:pk>/',views.item_detail, name ='menu_item'),
     
+    
 
 ]

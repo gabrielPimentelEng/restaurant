@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from restaurant_app.models import Menu, Booking,Category,Rating
+from restaurant_app.models import MenuItem, Booking,Category,Rating
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -16,8 +16,8 @@ class MenuSerializer(serializers.ModelSerializer):
     category_id = serializers.IntegerField(write_only=True)
     category = CategorySerializer(read_only=True)
     class Meta:
-        model = Menu
-        fields = ['id','name','price','inventory','category_id','category']
+        model = MenuItem
+        fields = ['id','name','price','inventory','featured','category_id','category']
         extra_kwargs = {
         'price':{'min_value':2},
         'inventory':{'min_value':0}
