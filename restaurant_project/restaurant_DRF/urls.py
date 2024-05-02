@@ -16,5 +16,15 @@ urlpatterns = [
     path('rating-create/<int:pk>', views.RatingViewList.as_view()),
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # path('groups/manager/users',views.UserGroupManagementView.as_view()),
+    path('groups/manager/users',views.Managers.as_view()),
+    path('groups/manager/users/<int:pk>',views.ManagersDelete.as_view()),
+
+
+    path('groups/delivery-crew/users',views.DeliveryCrew.as_view()),
+    path('groups/delivery-crew/users/<int:pk>',views.DeliveryCrewDelete.as_view()),
+    
+    #testing yet
+    
 
 ]
