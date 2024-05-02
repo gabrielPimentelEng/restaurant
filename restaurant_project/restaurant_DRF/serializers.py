@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from restaurant_app.models import MenuItem, Booking,Category,Rating
+from django.contrib.auth.models import User,Group
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -22,6 +23,30 @@ class MenuSerializer(serializers.ModelSerializer):
         'price':{'min_value':2},
         'inventory':{'min_value':0}
     }
+
+class GroupSerializer(serializers.ModelSerializer):
+    
+    group_names = serializers.SerializerMethodField()
+    
+    def get_group_names(self, obj):
+        return [group.name for group in obj.groups.all()]
+            
+            
+    class Meta:
+        model = User
+        fields = ['id','username','group_names']
+        extra_kwargs = {
+            'username': {'validators': []},  # There was an auto validation that was preventing creation of new User (it was not being created)
+        }
+
+
+
+
+
+
+
+
+
 
 class RatingSerializer(serializers.ModelSerializer):
     user_username = serializers.SerializerMethodField()

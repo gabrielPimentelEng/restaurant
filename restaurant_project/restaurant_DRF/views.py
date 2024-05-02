@@ -1,20 +1,24 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view,renderer_classes
-from .serializers import MenuSerializer,CategorySerializer,BookingSerializer,RatingSerializer
+from .serializers import MenuSerializer,CategorySerializer,BookingSerializer,RatingSerializer,GroupSerializer
 from restaurant_app.models import MenuItem,Category,Booking,Rating
-from rest_framework import status,generics
+from rest_framework import status,generics,mixins
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
 from rest_framework.exceptions import PermissionDenied
 from .throttle import CustomRateThrottle
-from .permissions import MenuItemPermittions,SpecificMenuItemPermittions
+from .permissions import MenuItemPermittions,SpecificMenuItemPermittions,GroupManagementPermittions,DeleteUserFromGroupPermittions
+from django.contrib.auth.models import User,Group
+from django.core.exceptions import ObjectDoesNotExist
+from .services import manage_user_group
 # Create your views here.
 # from rest_framework import generics,viewsets
 # from .models import MenuItem, Category
 # from .serializers import MenuItemSerializer, CategorySerializer
 # from django_filters.rest_framework import DjangoFilterBackend
+from django.http import Http404
 
 @api_view()
 def menu_item(request):
@@ -40,7 +44,73 @@ class MenuItemView(generics.RetrieveUpdateDestroyAPIView):
     ordering_fields = ['price', 'inventory']
     filterset_fields = ['price','inventory']
     search_fields = ['title']
+
+class Managers(generics.ListCreateAPIView):
     
+    queryset = User.objects.all()
+    serializer_class = GroupSerializer
+    permission_classes = [GroupManagementPermittions]
+    
+    def post(self,request):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            username = serializer.validated_data['username']
+            try:
+                user = User.objects.get(username=username)
+                manage_user_group(user,'Manager',add=True)
+                return Response({"message": f"User {username} added to Manager"},status=status.HTTP_201_CREATED)
+            except User.DoesNotExist:
+                return Response({"error":"Username {username} not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(serializer.errors)
+
+class ManagersDelete(generics.DestroyAPIView):
+    
+    queryset = User.objects.all()
+    serializer_class = GroupSerializer
+    permission_classes = [DeleteUserFromGroupPermittions]
+    
+    def delete(self, request, *args, **kwargs):
+            try:
+                user = self.get_object()
+                manage_user_group(user,'Manager',add=False)
+                return Response({"message": f"User {user.username} removed from Manager"},status=status.HTTP_201_CREATED)
+            except User.DoesNotExist:
+                return Response({"error":"Username {username} not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+class DeliveryCrew(generics.ListCreateAPIView):
+    
+    queryset = User.objects.all()
+    serializer_class = GroupSerializer
+    permission_classes = [GroupManagementPermittions]
+    
+    def post(self,request):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            username = serializer.validated_data['username']
+            try:
+                user = User.objects.get(username=username)
+                manage_user_group(user,'Delivery Crew',add=True)
+                return Response({"message": f"User {username} added to Delivery Crew"},status=status.HTTP_201_CREATED)
+            except User.DoesNotExist:
+                return Response({"error":"Username {username} not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(serializer.errors)
+
+class DeliveryCrewDelete(generics.DestroyAPIView):
+    
+    queryset = User.objects.all()
+    serializer_class = GroupSerializer
+    permission_classes = [DeleteUserFromGroupPermittions]
+    
+    def delete(self, request, *args, **kwargs):
+            try:
+                user = self.get_object()
+                manage_user_group(user,'Delivery Crew',add=False)
+                return Response({"message": f"User {user.username} removed from Delivery Crew"},status=status.HTTP_201_CREATED)
+            except User.DoesNotExist:
+                return Response({"error":"Username {username} not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        
+     
 
 class CategoriesView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
