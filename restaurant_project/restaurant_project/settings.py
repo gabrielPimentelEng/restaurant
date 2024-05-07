@@ -140,6 +140,7 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+    # Commented Global Filter, Ordering and Pagination
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES':['rest_framework.renderers.JSONRenderer',
 
@@ -147,8 +148,9 @@ REST_FRAMEWORK = {
 
     'rest_framework_xml.renderers.XMLRenderer',
     ],
+
     'DEFAULT_FILTER_BACKENDS': [
-        # 'django_filters.rest_framework.DjangoFilterBackend',
+        'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.OrderingFilter',
         'rest_framework.filters.SearchFilter',
         
@@ -165,10 +167,8 @@ REST_FRAMEWORK = {
         'custom': '10/min',
     },
     
-        
-
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 3
+    'PAGE_SIZE': 5
 }
 DJOSER = {
     # 'TOKEN_MODEL': None,  # This is important when using JWT
@@ -176,3 +176,13 @@ DJOSER = {
     # "LOGIN_FIELD":"email"
 }
 
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # If you are also using refresh tokens
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+
+    # Other configurations...
+}
