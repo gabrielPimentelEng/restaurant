@@ -1,4 +1,5 @@
 from rest_framework.permissions import BasePermission
+from django.db.models import Q
 
 
 class MenuItemPermittions(BasePermission):
@@ -56,6 +57,44 @@ class DeleteUserFromGroupPermittions(BasePermission):
         if not request.user.is_authenticated:
             return False
         # Check if User has permittions for POST (Manager Role)
+        elif request.method != 'DELETE':
+            return False
         else :
             return request.user.groups.filter(name='Manager').exists()
- 
+        
+class CartManagementPermissions(BasePermission):
+    
+    def has_permission(self, request,view):
+        
+        # Check for authenticated user
+        if not request.user.is_authenticated:
+            return False
+        # Check if User has permittions for POST (Manager Role)
+        # Deny everything that is not GET, POST or DELETE
+        elif request.method not in ['GET','POST','DELETE'] :
+            return False
+        else:
+            return not request.user.groups.exists()
+    
+class OrderPermissions(BasePermission):
+
+    def has_permission(self, request,view):
+
+        # Check for authenticated user
+        if not request.user.is_authenticated:
+            return False
+        # For POST only users that does not have group  
+        if request.method == 'POST'  :
+            return not request.user.groups.exists()
+        
+        elif request.method in ['PUT','PATCH','DELETE']:
+    
+            # For PATCH, check if the user is in 'Delivery Crew' or 'Manager'
+            # For PUT, check if the user is in 'Manager' only
+            # Filter based if is PUT or PATCH
+            required_groups = ['Manager'] if request.method in ['PUT','DELETE'] else ['Delivery Crew','Manager']
+            user_in_required_groups = request.user.groups.filter(name__in=required_groups).exists()
+            return user_in_required_groups
+
+        return True
+
