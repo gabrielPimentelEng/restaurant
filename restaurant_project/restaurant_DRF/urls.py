@@ -19,10 +19,12 @@ urlpatterns = [
     # path('groups/manager/users',views.UserGroupManagementView.as_view()),
     path('groups/manager/users',views.Managers.as_view()),
     path('groups/manager/users/<int:pk>',views.ManagersDelete.as_view()),
-
-
     path('groups/delivery-crew/users',views.DeliveryCrew.as_view()),
     path('groups/delivery-crew/users/<int:pk>',views.DeliveryCrewDelete.as_view()),
+    path('cart/menu-items', views.CartManagement.as_view()),
+    path('orders', views.OrderItemManagement.as_view()),
+    # path('orders/<int:pk>', views.OrderItemManagementNew.as_view()),
+    path('orders/<int:pk>', views.OrderItemManagementNew.as_view()),
     
     #testing yet
     
