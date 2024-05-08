@@ -25,6 +25,7 @@ urlpatterns = [
     path('orders', views.OrderItemManagement.as_view()),
     # path('orders/<int:pk>', views.OrderItemManagementNew.as_view()),
     path('orders/<int:pk>', views.OrderItemManagementNew.as_view()),
+    path('test', views.Test.as_view()),
     
     #testing yet
     

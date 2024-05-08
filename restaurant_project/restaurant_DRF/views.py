@@ -8,11 +8,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
 from rest_framework.exceptions import PermissionDenied
-from .throttle import CustomRateThrottle
+from .throttle import AuthenticatedUserThrottle,UnauthenticatedUserThrottle
 from .permissions import MenuItemPermittions,SpecificMenuItemPermittions,GroupManagementPermittions,DeleteUserFromGroupPermittions,CartManagementPermissions,OrderPermissions
 from django.contrib.auth.models import User,Group
-from django.core.exceptions import ObjectDoesNotExist
-from .services import manage_user_group
+from django.core.exceptions import ObjectDoesNotExist, ValidationError, FieldError
+from .services import manage_user_group,apply_filters_and_pagination
 from django.http import JsonResponse,Http404
 from django.utils import timezone
 from rest_framework.pagination import PageNumberPagination
@@ -20,38 +20,38 @@ from rest_framework.filters import OrderingFilter
 from rest_framework import filters
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
+import logging
 # Pagination Class
+from django.core.paginator import Paginator,EmptyPage
 
-class OrderPagination(PageNumberPagination):
-    page_size = 5
-    page_size_query_param = 'page_size'
-    max_page_size = 100
 
-# Filter Class
-
-class OrderFilter(django_filters.FilterSet):
-    class Meta:
-        model = Order
-        fields = {
-            'user': ['exact'],
-            'user__username': ['exact', 'icontains'],
-        }
-    
 @api_view()
 def menu_item(request):
     items = MenuItem.objects.all()
     serialized_item = MenuSerializer(items,many=True)
     return Response(serialized_item.data)
 
-
-
 class MenuView(generics.ListCreateAPIView):
     queryset = MenuItem.objects.all()
     serializer_class = MenuSerializer
     permission_classes = [MenuItemPermittions]
+    filterset_fields = ['name','price']
     
+    # def get(self, request, *args, **kwargs):
+    #     # Dict to use custom keys for filtering
+    #     filter_mappings = {
+    #         'name__istartswith':'name',
+    #         'price':'price',
+    #         'featured':'featured'
+    #     }
+    #     # Apply custom filtering, default ordering and pagination
+    #     filtered_paginated_items = apply_filters_and_pagination(self.get_queryset(), request, filter_mappings=filter_mappings)
+
+    #     # Serialize the resulting queryset
+    #     serializer = self.get_serializer(filtered_paginated_items, many=True)
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
     
-# class MenuItemView(generics.ListCreateAPIView):
+
 class MenuItemView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MenuItem.objects.all()
     serializer_class = MenuSerializer
@@ -89,9 +89,8 @@ class ManagersDelete(generics.DestroyAPIView):
     def delete(self, request, *args, **kwargs):
             try:
                 user = self.get_object()
-                # print (user)
                 manage_user_group(user,'Manager',add=False)
-                return Response({"message": f"User {user.username} removed from Manager"},status=status.HTTP_201_CREATED)
+                return Response({"message": f"User {user.username} removed from Manager"},status=status.HTTP_200_OK)
             except User.DoesNotExist:
                 return Response({"error":"Username {username} not found"}, status=status.HTTP_404_NOT_FOUND)
             
@@ -123,7 +122,7 @@ class DeliveryCrewDelete(generics.DestroyAPIView):
             try:
                 user = self.get_object()
                 manage_user_group(user,'Delivery Crew',add=False)
-                return Response({"message": f"User {user.username} removed from Delivery Crew"},status=status.HTTP_201_CREATED)
+                return Response({"message": f"User {user.username} removed from Delivery Crew"},status=status.HTTP_200_OK)
             except User.DoesNotExist:
                 return Response({"error":"Username {username} not found"}, status=status.HTTP_404_NOT_FOUND)
         
@@ -131,26 +130,23 @@ class DeliveryCrewDelete(generics.DestroyAPIView):
 class OrderItemManagement(APIView):
 
     permission_classes = [OrderPermissions]
-    # pagination_class = OrderPagination
-    # filter_backends = [DjangoFilterBackend]
-    # filterset_class = OrderFilter
-    # ordering_fields = ['date','user']
-    # ordering = ['date'] # Default ordering
-    # # search_fields = ['user','user__username']
     
     def get(self, request, *args, **kwargs):
-        if request.user.groups.filter(name="Manager").exists():
+        if not request.user.groups.exists():
+            order_item = Order.objects.filter(user_id=request.user.id)
+        elif request.user.groups.filter(name="Manager").exists():
             order_item = Order.objects.all()
-            serializer = OrderSerializer(order_item,many=True)
-            return Response(serializer.data,status=status.HTTP_200_OK)
         elif request.user.groups.filter(name="Delivery Crew").exists():
             order_item = Order.objects.filter(delivery_crew_id=request.user.id)
-            serializer = OrderSerializer(order_item,many=True)
-            return Response(serializer.data,status=status.HTTP_200_OK)
-        else:
-            order_item = Order.objects.filter(user_id=request.user.id)
-            serializer = OrderSerializer(order_item,many=True)
-            return Response(serializer.data,status=status.HTTP_200_OK)  
+ 
+        filter_mappings = {
+            'date':'date',
+            'status':'status'
+        }
+        # Apply custom filtering, default ordering and pagination
+        filtered_paginated_orders = apply_filters_and_pagination(order_item,request, filter_mappings=filter_mappings)
+        serializer = OrderSerializer(filtered_paginated_orders,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
         user = request.user
@@ -190,11 +186,24 @@ class OrderItemManagementNew(APIView):
     
     permission_classes = [OrderPermissions]
     
-    def get(self, request,pk, *args, **kwargs):
-        order_items = OrderItem.objects.filter(order_id=pk)
-        serializer = OrderItemSerializer(order_items,many=True)
-        return Response(serializer.data,status=status.HTTP_200_OK)
-    
+    def get(self, request, pk, *args, **kwargs):
+        # Check if the user is part of a relevant group (assuming groups are used to determine customer status)
+        if not request.user.groups.exists():
+            # Retrieve all order items associated with the order_id 'pk'
+            order_items = OrderItem.objects.filter(order_id=pk)
+            # Ensure that the current user is authorized to view these order items
+            if not order_items:
+                return Response({'Error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+            # Check if order items belong to the user making the request
+            if any(item.order.user_id == request.user.id for item in order_items):
+                filtered_paginated_orders = apply_filters_and_pagination(order_items, request)
+                serializer = OrderItemSerializer(filtered_paginated_orders,many=True)
+                return Response(serializer.data,status=status.HTTP_200_OK)
+            else:
+                return Response({'Error': 'Unauthorized access'}, status=status.HTTP_403_FORBIDDEN)
+        else:
+            return Response({'Error': 'Not a Customer'}, status=status.HTTP_403_FORBIDDEN)
+        
     def patch(self,request,pk):
         try:
             order = Order.objects.get(pk=pk)
@@ -216,11 +225,8 @@ class OrderItemManagementNew(APIView):
     def delete(self,request,pk, *args, **kwargs):
         
         obj_order = Order.objects.filter(id=pk).delete()
-        return JsonResponse({'message':f'Order {pk} from  deleted succesfully'},status=200)
+        return JsonResponse({'message':f'Order {pk} from  deleted succesfully'},status=status.HTTP_200_OK)
         
-    
-    
-    
     
 class CartManagement(APIView):
 
@@ -267,9 +273,7 @@ class CartManagement(APIView):
     def delete(self,request, *args, **kwargs):
         user = request.user
         Cart.objects.filter(user=user).delete()
-        return JsonResponse({'message':f'Carts deleted from user {user.username} succesfully'},status=200)
-    
-
+        return JsonResponse({'message':f'Carts deleted from user {user.username} succesfully'},status=status.HTTP_200_OK)
 
 class CategoriesView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
@@ -288,11 +292,8 @@ class BookingDeleteView(generics.RetrieveUpdateDestroyAPIView):
 class RatingView(APIView):
     
     permission_classes = [IsAuthenticated] # blocks post and get for non authorized users
-    throttle_classes = [CustomRateThrottle]
+    
     def post(self, request):
-        
-        # if not request.user.is_authenticated:
-        #     raise PermissionDenied("You must be logged in to post ratings.")
         
         existing_rating  = Rating.objects.filter(user=request.user, menuitem_id=request.data.get('menuitem_id')).first()
         if not existing_rating:
@@ -320,10 +321,7 @@ class RatingViewList(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = RatingSerializer
 
 
-    
-
-
-# class MenuItemsViewSet(viewsets.ModelViewSet):
-#     queryset = Order.objects.all()
-#     serializer_class = OrderSerializer
-#     ordering_fields=['user']
+class Test(generics.ListAPIView):
+    queryset = MenuItem.objects.all()
+    serializer_class = MenuSerializer
+    # pagination_class = PageNumberPagination
