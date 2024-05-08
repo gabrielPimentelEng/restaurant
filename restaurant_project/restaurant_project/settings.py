@@ -161,10 +161,14 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_THROTTLE_CLASSES': [
-        'restaurant_DRF.throttle.CustomRateThrottle'
+        # 'restaurant_DRF.throttle.CustomRateThrottle',
+        'restaurant_DRF.throttle.AuthenticatedUserThrottle',
+        'restaurant_DRF.throttle.UnauthenticatedUserThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'custom': '10/min',
+        'authenticated_user': '10/min',
+        'unauthenticated_user': '2/min',
+        
     },
     
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',

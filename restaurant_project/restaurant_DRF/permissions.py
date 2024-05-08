@@ -7,8 +7,10 @@ class MenuItemPermittions(BasePermission):
     def has_permission(self, request, view):
         
         # Check for authenticated user
-        if not request.user.is_authenticated:
-            return False
+        # if not request.user.is_authenticated:
+        #     return False
+        if 3>5:
+            pass
         # Deny everything that is not GET or POST
         elif request.method not in ['GET','POST'] :
             return False
