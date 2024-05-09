@@ -182,7 +182,7 @@ class OrderItemManagement(APIView):
             print(f"error {str(e)}")
             return JsonResponse({'error': str(e)}, status=500)
 
-class OrderItemManagementNew(APIView):
+class OrderItemManagementSpecific(APIView):
     
     permission_classes = [OrderPermissions]
     
@@ -210,11 +210,15 @@ class OrderItemManagementNew(APIView):
             
             # Check if assigned user is from Delivery Crew Group
             delivery_crew_id = request.data.get('delivery_crew')
+            if delivery_crew_id and not request.user.groups.filter(name='Manager').exists():
+                return Response({'Error':'You do not have permittions to assign a Delivery Crew'})
             delivery_crew_user = User.objects.get(id=delivery_crew_id)
             if not delivery_crew_user.groups.filter(name='Delivery Crew').exists():
                 return Response({'Error':'User assigned wasn\'t Delivery Crew '})
         except Order.DoesNotExist:
-            return Response({'error': 'Not Found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'Error': 'Order not found for requested id'}, status=status.HTTP_404_NOT_FOUND)
+        except User.DoesNotExist:
+            return Response({"Error":"User not found for requested id"})
         # Assign a new Delivery Crew and update status
         print(request.data.get('delivery_crew'))
         serializer = OrderSerializer(order, data=request.data, partial=True, context={'request':request})  # partial=True allows partial updates
@@ -225,7 +229,7 @@ class OrderItemManagementNew(APIView):
     def delete(self,request,pk, *args, **kwargs):
         
         obj_order = Order.objects.filter(id=pk).delete()
-        return JsonResponse({'message':f'Order {pk} from  deleted succesfully'},status=status.HTTP_200_OK)
+        return JsonResponse({'Message':f'Order {pk} from  deleted succesfully'},status=status.HTTP_200_OK)
         
     
 class CartManagement(APIView):
