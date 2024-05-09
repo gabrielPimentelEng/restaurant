@@ -25,7 +25,7 @@ class MenuView(generics.ListCreateAPIView):
     queryset = MenuItem.objects.all()
     serializer_class = MenuSerializer
     permission_classes = [MenuItemPermittions]
-    filterset_fields = ['name','price']
+    filterset_fields = ['name','price','category__title']
     
     # def get(self, request, *args, **kwargs):
     #     # Dict to use custom keys for filtering
