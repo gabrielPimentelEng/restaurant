@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from restaurant_app.models import MenuItem, Booking,Category,Rating,Cart,Order,OrderItem
-from django.contrib.auth.models import User,Group
+from django.contrib.auth.models import User
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -76,8 +76,6 @@ class OrderItemSerializer(serializers.ModelSerializer):
     
 class OrderSerializer(serializers.ModelSerializer):
     
-    # item = serializers.SerializerMethodField()
-    # username = serializers.SerializerMethodField()
     order_owner = serializers.SerializerMethodField()
     delivery_crew_name = serializers.SerializerMethodField()
     class Meta:
