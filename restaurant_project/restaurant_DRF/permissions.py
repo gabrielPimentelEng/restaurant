@@ -49,7 +49,8 @@ class GroupManagementPermittions(BasePermission):
             return False
         # Check if User has permittions for GET and POST (Manager Role)
         else :
-            return request.user.groups.filter(name='Manager').exists()
+            # return request.user.groups.filter(name='Manager').exists()
+            return request.user.is_superuser
         
 class DeleteUserFromGroupPermittions(BasePermission):
     
@@ -62,7 +63,8 @@ class DeleteUserFromGroupPermittions(BasePermission):
         elif request.method != 'DELETE':
             return False
         else :
-            return request.user.groups.filter(name='Manager').exists()
+            # return request.user.groups.filter(name='Manager').exists()
+            return request.user.is_superuser
         
 class CartManagementPermissions(BasePermission):
     
