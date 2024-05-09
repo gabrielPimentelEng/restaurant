@@ -1,28 +1,18 @@
-from django.shortcuts import render
-from rest_framework.decorators import api_view,renderer_classes
+from rest_framework.decorators import api_view
 from .serializers import MenuSerializer,CategorySerializer,BookingSerializer,RatingSerializer,GroupSerializer,CartSerializer,OrderItemSerializer,OrderSerializer
 from restaurant_app.models import MenuItem,Category,Booking,Rating,Cart,Order,OrderItem
-from rest_framework import status,generics,mixins
+from rest_framework import status,generics
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
-from rest_framework.exceptions import PermissionDenied
-from .throttle import AuthenticatedUserThrottle,UnauthenticatedUserThrottle
 from .permissions import MenuItemPermittions,SpecificMenuItemPermittions,GroupManagementPermittions,DeleteUserFromGroupPermittions,CartManagementPermissions,OrderPermissions
-from django.contrib.auth.models import User,Group
-from django.core.exceptions import ObjectDoesNotExist, ValidationError, FieldError
+from django.contrib.auth.models import User
 from .services import manage_user_group,apply_filters_and_pagination
-from django.http import JsonResponse,Http404
+from django.http import JsonResponse
 from django.utils import timezone
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.filters import OrderingFilter
-from rest_framework import filters
-import django_filters
-from django_filters.rest_framework import DjangoFilterBackend
-import logging
+
 # Pagination Class
-from django.core.paginator import Paginator,EmptyPage
+
 
 
 @api_view()
