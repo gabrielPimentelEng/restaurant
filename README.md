@@ -1,1 +1,2 @@
-Project of a restaurant website made in django
+# restaurant
+Restaurant project made in Django 

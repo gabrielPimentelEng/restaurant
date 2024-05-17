@@ -27,20 +27,6 @@ class MenuView(generics.ListCreateAPIView):
     permission_classes = [MenuItemPermittions]
     filterset_fields = ['name','price','category__title']
     
-    # def get(self, request, *args, **kwargs):
-    #     # Dict to use custom keys for filtering
-    #     filter_mappings = {
-    #         'name__istartswith':'name',
-    #         'price':'price',
-    #         'featured':'featured'
-    #     }
-    #     # Apply custom filtering, default ordering and pagination
-    #     filtered_paginated_items = apply_filters_and_pagination(self.get_queryset(), request, filter_mappings=filter_mappings)
-
-    #     # Serialize the resulting queryset
-    #     serializer = self.get_serializer(filtered_paginated_items, many=True)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
-    
 
 class MenuItemView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MenuItem.objects.all()
@@ -52,71 +38,59 @@ class MenuItemView(generics.RetrieveUpdateDestroyAPIView):
     filterset_fields = ['price','inventory']
     search_fields = ['title']
 
-class Managers(generics.ListCreateAPIView):
     
-    queryset = User.objects.all()
+class GroupManagementBase(generics.ListCreateAPIView):
+
     serializer_class = GroupSerializer
     permission_classes = [GroupManagementPermittions]
+
+    group_name = None  # Define the group name in subclass
+
     
-    def post(self,request):
+    def get_queryset(self):
+    
+        if self.group_name:
+            return User.objects.filter(groups__name=self.group_name)
+        return User.objects.none()  # Return an empty queryset if no group_name is set
+    def post(self, request):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             username = serializer.validated_data['username']
             try:
                 user = User.objects.get(username=username)
-                manage_user_group(user,'Manager',add=True)
-                return Response({"message": f"User {username} added to Manager"},status=status.HTTP_201_CREATED)
+                manage_user_group(user, self.group_name, add=True)
+                return Response({"message": f"User {username} added to {self.group_name}"}, status=status.HTTP_201_CREATED)
             except User.DoesNotExist:
-                return Response({"error":"Username {username} not found"}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error": f"Username {username} not found"}, status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors)
 
-class ManagersDelete(generics.DestroyAPIView):
-    
+class GroupManagementDeleteBase(generics.DestroyAPIView):
     queryset = User.objects.all()
     serializer_class = GroupSerializer
     permission_classes = [DeleteUserFromGroupPermittions]
-    
-    def delete(self, request, *args, **kwargs):
-            try:
-                user = self.get_object()
-                manage_user_group(user,'Manager',add=False)
-                return Response({"message": f"User {user.username} removed from Manager"},status=status.HTTP_200_OK)
-            except User.DoesNotExist:
-                return Response({"error":"Username {username} not found"}, status=status.HTTP_404_NOT_FOUND)
-            
-class DeliveryCrew(generics.ListCreateAPIView):
-    
-    queryset = User.objects.all()
-    serializer_class = GroupSerializer
-    permission_classes = [GroupManagementPermittions]
-    
-    def post(self,request):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            username = serializer.validated_data['username']
-            try:
-                user = User.objects.get(username=username)
-                manage_user_group(user,'Delivery Crew',add=True)
-                return Response({"message": f"User {username} added to Delivery Crew"},status=status.HTTP_201_CREATED)
-            except User.DoesNotExist:
-                return Response({"error":"Username {username} not found"}, status=status.HTTP_404_NOT_FOUND)
-        return Response(serializer.errors)
 
-class DeliveryCrewDelete(generics.DestroyAPIView):
-    
-    queryset = User.objects.all()
-    serializer_class = GroupSerializer
-    permission_classes = [DeleteUserFromGroupPermittions]
-    
+    group_name = None  # Define the group name in subclass
+
     def delete(self, request, *args, **kwargs):
-            try:
-                user = self.get_object()
-                manage_user_group(user,'Delivery Crew',add=False)
-                return Response({"message": f"User {user.username} removed from Delivery Crew"},status=status.HTTP_200_OK)
-            except User.DoesNotExist:
-                return Response({"error":"Username {username} not found"}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            user = self.get_object()
+            manage_user_group(user, self.group_name, add=False)
+            return Response({"message": f"User {user.username} removed from {self.group_name}"}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"error": f"Username {user.username} not found"}, status=status.HTTP_404_NOT_FOUND)
         
+class Managers(GroupManagementBase):
+    group_name = 'Manager'
 
+class ManagersDelete(GroupManagementDeleteBase):
+    group_name = 'Manager'
+
+class DeliveryCrew(GroupManagementBase):
+    group_name = 'Delivery Crew'
+
+class DeliveryCrewDelete(GroupManagementDeleteBase):
+    group_name = 'Delivery Crew'
+        
 class OrderItemManagement(APIView):
 
     permission_classes = [OrderPermissions]
@@ -308,7 +282,7 @@ class RatingView(APIView):
         queryset = Rating.objects.all()
         serializer_class = RatingSerializer(queryset, many=True)
         return Response(serializer_class.data,status=status.HTTP_200_OK)
-    
+
 class RatingViewList(generics.RetrieveUpdateDestroyAPIView):
     
     queryset = Rating.objects.all()
