@@ -83,11 +83,11 @@ WSGI_APPLICATION = 'restaurant_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'REDACTED',
-        'USER': 'REDACTED',
-        'PASSWORD':config('database_password'),
-        'HOST':'REDACTED',
-        'PORT': 'REDACTED',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT'),
         # 'OPTIONS': {
         #     'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
         # }
