@@ -9,7 +9,7 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
     font-family: 'Markazi Text', serif;
-    letter-spacing: 2px;;
+    letter-spacing: 2px;
 }
 
 h1 {
@@ -126,7 +126,7 @@ input{
 #button {
     padding: .5rem 1rem;
     border: 1px solid #495E57;
-    background-color:#495E57;;
+    background-color:#495E57;
     border-radius: 5px;
     width: 80%;
     font-size: 1.25rem;
@@ -141,7 +141,7 @@ input{
     background-position: 75%;
     color: white;
     min-height: 200px;
-    text-align: center;;
+    text-align: center;
 }
 
 #hero p {
