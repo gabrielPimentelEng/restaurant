@@ -1,0 +1,39 @@
+{%extends 'base.html'%}
+{%load static%}
+{%block content%}
+
+<section>
+
+    <article>
+        {% comment %} Menu title and bar {% endcomment %}
+        <h1>Menu item</h1>
+        <a href="{% url 'home' %}">Home </a>/
+        <a href="{% url 'menu' %}">Menu </a>/
+        <strong>{{item.name}}</strong>
+        
+        {% comment %} Item name, description and price {% endcomment %}
+        
+        <div class="row">
+            {% comment %} left div {% endcomment %}
+            <div class="column">
+                <h2>{{item.name}}</h2>
+                <strong><p>{{item.description}}</p>
+                <p>Price: ${{item.price}}</p></strong>
+            </div>
+            
+            <div class="column">
+                <img src="{% static 'img/menu_items/'|add:item.name|add:'.jpg' %}" alt="{{item.name}}.jpg">
+                
+            </div>
+
+                
+
+
+        </div>
+        
+    </article>
+</section>
+
+
+
+{%endblock%}
